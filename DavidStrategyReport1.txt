@@ -1,0 +1,32 @@
+Balance between:
+	1. Supplies income and spenditure
+	2. Upgrades and soldier outupt
+	3. Passive camps and artillery
+		3a. Within passive camps, defensive and supplies
+
+Strategic rambling:
+	SHIELDS:
+	-They are only situationally useful (if suffering significant artillery damage)
+	therefore, we should code for this to determine if we are at risk of taking 
+	serious artillery damage
+	-A potential strategy may be an artillery feint to get them to build shields
+	MEDBAYS:
+	-Slow heal rate, tests need to be run on their effectiveness
+	SUPPLIERS:
+	-Power permitting, 1-2 suppliers are desired as we get the most gain per
+	supplier.
+	-No more than 6 suppliers should be gotten, as returns start diminishing
+	faster
+	ARTILLERY:
+	-A central artillery can cover the majority of the map, making them 
+	potentially useful, most damaging to heavily protected areas (camps, HQ)
+	-However, Artillery does 40 Damage/20 turns, while Soldiers do 6 damage / 1 turn
+	not to mention that the artilery splash damage is half its normal damage, 
+	AND it hurts allied units. 
+	-Note should be taken every time an enemy artillery cannon goes off;
+	This will allow our units to scatter, hide, or hug enemy units when the 
+	enemy artillery is armed next.
+	GENERATOR:
+	-One generator supplies 1/4 the power of an HQ, quite significant.
+	-I will add a list of potential strategies for resource managment later.
+	It is  a VERY signficant topic that demands a large section all its own.
