@@ -12,7 +12,7 @@ import java.util.Iterator;
  * The HQ will spawn soldiers continuously. 
  */
 
-public class RobotPlayer implements Constants{
+public class HoodPlayer implements Constants{
 	private int[][] map;
 	public static void run(RobotController rc) {
 		while (true) {
@@ -53,18 +53,53 @@ public class RobotPlayer implements Constants{
 			}
 		}
 	}
+	//Next four methods are used in getBottleNecks to calculate bottlenecks
 	public int checkXBottleNeck(MapLocation loc, RobotController rc){
 		int top = loc.y, bot = loc.y, total = 0;
-		while((map[loc.x][--top]!=Sprite.NEUTRALMINE.getVal()&&top>=0)||(map[loc.x][++bot]!=Sprite.NEUTRALMINE.getVal()&&bot<rc.getMapHeight())&&total<=MAX_BOTTLNECK_CHECK)
+		while((map[loc.x][--top]!=NEUTRALMINE&&top>=0)||(map[loc.x][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight())&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
 		return total;
 	}
+	public int checkYBottleNeck(MapLocation loc, RobotController rc){
+		int left = loc.x, right = loc.x, total = 0;
+		while((map[--left][loc.y]!=NEUTRALMINE&&left>=0)||(map[++right][loc.y]!=NEUTRALMINE&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		return total;
+	}
+	public int checkNAngleBottleNeck(MapLocation loc, RobotController rc){
+		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
+		while((map[--left][++top]!=NEUTRALMINE&&left>=0&&top<rc.getMapHeight())||(map[++right][--bot]!=NEUTRALMINE&&bot>=0&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		return total;
+	}
+	public int checkPAngleBottleNeck(MapLocation loc, RobotController rc){
+		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
+		while((map[--left][--top]!=NEUTRALMINE&&left>=0&&top>=0)||(map[++right][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight()&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		return total;
+	}
+	//In the map array, the hundreds place of the number is the bottleneck value
 	public ArrayList<MapLocation> getBottleNecks(ArrayList<MapLocation> path, RobotController rc){
 		ArrayList<MapLocation> ret = new ArrayList<MapLocation>();
 		for(int i = 2; i<path.size();++i){
+			int val;
 			if(path.get(i).x == path.get(i-2).x){
-				int  val = checkXBottleNeck(path.get(i-1), rc);
+				  val = checkXBottleNeck(path.get(i-1), rc);
+				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
 			}
+			else if(path.get(i).y == path.get(i-2).y){
+				  val = checkYBottleNeck(path.get(i-1), rc);
+				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
+			}
+			else if(path.get(i).y < path.get(i-2).y){
+				  val = checkPAngleBottleNeck(path.get(i-1), rc);
+				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
+			}
+			else{
+				  val = checkNAngleBottleNeck(path.get(i-1), rc);
+				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
+			}
+			//This method doesn't give a fuck about the last spot being a bottleneck
 		}
 		return ret;
 	}
@@ -73,16 +108,16 @@ public class RobotPlayer implements Constants{
 		try{
 			MapLocation[] locs = rc.senseMineLocations(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2), rc.getMapWidth()/2+rc.getMapHeight()/2, null);
 			for (MapLocation m: locs){
-				ret[m.x][m.y] = Sprite.NEUTRALMINE.getVal();
+				ret[m.x][m.y] = NEUTRALMINE;
 			}
 			locs = rc.senseAllEncampmentSquares();
 			for (MapLocation m: locs){
-				ret[m.x][m.y] = Sprite.NEUTRALCAMP.getVal();
+				ret[m.x][m.y] = NEUTRALCAMP;
 			}
 			locs[0] = rc.senseHQLocation();
-			ret[locs[0].x][locs[0].y] = Sprite.ALLIEDHQ.getVal();
+			ret[locs[0].x][locs[0].y] = ALLIEDHQ;
 			locs[0] = rc.senseEnemyHQLocation();
-			ret[locs[0].x][locs[0].y] = Sprite.ENEMYHQ.getVal();
+			ret[locs[0].x][locs[0].y] = ENEMYHQ;
 		}
 		catch(Exception e){
 			e.printStackTrace();
