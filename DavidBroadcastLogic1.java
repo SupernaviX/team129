@@ -11,7 +11,7 @@ import battlecode.common.RobotType;
  * Robots will move around randomly, occasionally mining and writing useless messages.
  * The HQ will spawn soldiers continuously. 
  */
-public class RobotPlayer {
+public class DavidBroadcastLogic1 {
 	private static long[] lastRoundMemory;
 	public static void run(RobotController rc) {
 		lastRoundMemory = rc.getTeamMemory();
