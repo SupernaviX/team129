@@ -5,6 +5,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
+import battlecode.common.Clock;
 import java.util.ArrayList;
 import java.util.Iterator;
 /** The example funcs player is a player meant to demonstrate basic usage of the most common commands.
@@ -16,6 +17,7 @@ public class HoodPlayer implements Constants{
 	private int[][] map;
 	public static void run(RobotController rc) {
 		while (true) {
+			Clock.getRoundNum();
 			try {
 				if (rc.getType() == RobotType.HQ) {
 					if (rc.isActive()) {
@@ -56,25 +58,33 @@ public class HoodPlayer implements Constants{
 	//Next four methods are used in getBottleNecks to calculate bottlenecks
 	public int checkXBottleNeck(MapLocation loc, RobotController rc){
 		int top = loc.y, bot = loc.y, total = 0;
-		while((map[loc.x][--top]!=NEUTRALMINE&&top>=0)||(map[loc.x][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight())&&total<=MAX_BOTTLENECK_CHECK)
+		while((map[loc.x][--top]!=NEUTRALMINE&&top>=0)&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		while((map[loc.x][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight())&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
 		return total;
 	}
 	public int checkYBottleNeck(MapLocation loc, RobotController rc){
 		int left = loc.x, right = loc.x, total = 0;
-		while((map[--left][loc.y]!=NEUTRALMINE&&left>=0)||(map[++right][loc.y]!=NEUTRALMINE&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+		while((map[--left][loc.y]!=NEUTRALMINE&&left>=0)&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		while((map[++right][loc.y]!=NEUTRALMINE&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
 		return total;
 	}
 	public int checkNAngleBottleNeck(MapLocation loc, RobotController rc){
 		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
-		while((map[--left][++top]!=NEUTRALMINE&&left>=0&&top<rc.getMapHeight())||(map[++right][--bot]!=NEUTRALMINE&&bot>=0&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+		while((map[--left][++top]!=NEUTRALMINE&&left>=0&&top<rc.getMapHeight())&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
+		while(total<=MAX_BOTTLENECK_CHECK&&map[++right][--bot]!=NEUTRALMINE&&bot>=0&&right<rc.getMapWidth())
+			++total;
 		return total;
 	}
 	public int checkPAngleBottleNeck(MapLocation loc, RobotController rc){
 		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
-		while((map[--left][--top]!=NEUTRALMINE&&left>=0&&top>=0)||(map[++right][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight()&&right<rc.getMapWidth())&&total<=MAX_BOTTLENECK_CHECK)
+		while((map[--left][--top]!=NEUTRALMINE&&left>=0&&top>=0)&&total<=MAX_BOTTLENECK_CHECK)
+			total++;
+		while(total<=MAX_BOTTLENECK_CHECK&&map[++right][++bot]!=NEUTRALMINE&&bot<rc.getMapHeight()&&right<rc.getMapWidth())
 			total++;
 		return total;
 	}
