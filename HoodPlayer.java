@@ -7,7 +7,8 @@ import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
 import battlecode.common.Clock;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedList;
+
 /** The example funcs player is a player meant to demonstrate basic usage of the most common commands.
  * Robots will move around randomly, occasionally mining and writing useless messages.
  * The HQ will spawn soldiers continuously. 
@@ -15,9 +16,9 @@ import java.util.Iterator;
 
 public class HoodPlayer implements Constants{
 	private int[][] map;
+	
 	public static void run(RobotController rc) {
 		while (true) {
-			Clock.getRoundNum();
 			try {
 				if (rc.getType() == RobotType.HQ) {
 					if (rc.isActive()) {
@@ -113,6 +114,13 @@ public class HoodPlayer implements Constants{
 		}
 		return ret;
 	}
+	public LinkedList<MapLocation> pointsOfInterest(MapLocation[] camps){
+		LinkedList<MapLocation> ret = new LinkedList<MapLocation>();
+		for (MapLocation camp: camps){
+			
+		}
+		return ret;
+	}
 	public int[][] mapRepresentation(RobotController rc){
 		int[][] ret = new int[rc.getMapWidth()][rc.getMapHeight()];
 		try{
@@ -133,5 +141,12 @@ public class HoodPlayer implements Constants{
 			e.printStackTrace();
 		}
 		return ret;
+	}
+	public static int[][] precomputeDistances(RobotController rc, int[][] map){
+		
+	}
+	public static int setBits(int start, int code){
+		
+		return 0;
 	}
 }
