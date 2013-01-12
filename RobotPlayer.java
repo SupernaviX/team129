@@ -11,6 +11,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -33,7 +35,7 @@ public class RobotPlayer implements Constants{
 					}
 				}
 				System.out.println("Algorithm Started");
-				aStar(map, rc.senseHQLocation(), rc.senseEnemyHQLocation());
+				findPath(map, rc.senseHQLocation(), rc.senseEnemyHQLocation());
 				System.out.println("Algorithm Finished");
 				rc.yield();
 			} catch (Exception e) {
@@ -42,7 +44,8 @@ public class RobotPlayer implements Constants{
 		}
 	}
 
-	public static LinkedList<PathfindingNode> twoStars(int[][] map, MapLocation start, MapLocation end) {
+	//Use a bidirectional A* algorithm to find an efficient path
+	public static LinkedList<MapLocation> findPath(int[][] map, MapLocation start, MapLocation end) {
 		PathfindingNodeComparator pnc = new PathfindingNodeComparator();
 		PriorityQueue<PathfindingNode> startQueue = new PriorityQueue<PathfindingNode>(128, pnc);
 		PriorityQueue<PathfindingNode> endQueue = new PriorityQueue<PathfindingNode>(128, pnc);
@@ -57,14 +60,14 @@ public class RobotPlayer implements Constants{
 			//Run A* going from the start position to the end position
 			PathfindingNode top = startQueue.poll();
 			if (endExplored[top.y][top.x] != null) { //The start and end search areas have met
-				LinkedList<PathfindingNode> result = new LinkedList<PathfindingNode>();
+				LinkedList<MapLocation> result = new LinkedList<MapLocation>();
 				PathfindingNode otherEnd = endExplored[top.y][top.x];
 				while (top != null) {
-					result.addFirst(top);
+					result.addFirst(new MapLocation(top.x, top.y));
 					top = top.previous;
 				}
 				while (otherEnd != null) {
-					result.addLast(otherEnd);
+					result.addLast(new MapLocation(otherEnd.x, otherEnd.y));
 					otherEnd = otherEnd.previous;
 				}
 				/*for (int i = 0; i < explored.length; ++i) {
@@ -81,15 +84,22 @@ public class RobotPlayer implements Constants{
 				}*/
 				return result;
 			}
-			if (top.x > 0 && startExplored[top.y][top.x - 1] == null) {
-				PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x - 1] == NEUTRALMINE);
-				startQueue.add(newNode);
-				startExplored[top.y][top.x - 1] = newNode;
-			}
-			if (top.x < map[0].length - 1 && startExplored[top.y][top.x + 1] == null) {
-				PathfindingNode newNode = new PathfindingNode(top.x + 1, top.y, top, end, map[top.y][top.x + 1] == NEUTRALMINE);
-				startQueue.add(newNode);
-				startExplored[top.y][top.x + 1] = newNode;
+			if (top.x > 0) {
+				if (top.y > 0 && startExplored[top.y - 1][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y - 1, top, end, map[top.y - 1][top.x - 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y - 1][top.x - 1] = newNode;
+				}
+				if (startExplored[top.y][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x - 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y][top.x - 1] = newNode;
+				}
+				if (top.y < map.length - 1 && startExplored[top.y + 1][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, end, map[top.y + 1][top.x - 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y + 1][top.x - 1] = newNode;
+				}
 			}
 			if (top.y > 0 && startExplored[top.y - 1][top.x] == null) {
 				PathfindingNode newNode = new PathfindingNode(top.x, top.y - 1, top, end, map[top.y - 1][top.x] == NEUTRALMINE);
@@ -101,24 +111,41 @@ public class RobotPlayer implements Constants{
 				startQueue.add(newNode);
 				startExplored[top.y + 1][top.x] = newNode;
 			}
+			if (top.x < map.length - 1) {
+				if (top.y > 0 && startExplored[top.y - 1][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x + 1, top.y - 1, top, end, map[top.y - 1][top.x + 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y - 1][top.x + 1] = newNode;
+				}
+				if (startExplored[top.y][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x + 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y][top.x + 1] = newNode;
+				}
+				if (top.y < map.length - 1 && startExplored[top.y + 1][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, end, map[top.y + 1][top.x + 1] == NEUTRALMINE);
+					startQueue.add(newNode);
+					startExplored[top.y + 1][top.x + 1] = newNode;
+				}
+			}
 
 			//Run A* going from the end position to the start position
 			top = endQueue.poll();
-			if (startExplored[top.y][top.x] != null) { //The start and end search areas have met
-				LinkedList<PathfindingNode> result = new LinkedList<PathfindingNode>();
+			if (startExplored[top.y][top.x] != null) { //The end and start search areas have met
+				LinkedList<MapLocation> result = new LinkedList<MapLocation>();
 				PathfindingNode otherEnd = startExplored[top.y][top.x];
 				while (top != null) {
-					result.addLast(top);
+					result.addFirst(new MapLocation(top.x, top.y));
 					top = top.previous;
 				}
 				while (otherEnd != null) {
-					result.addFirst(otherEnd);
+					result.addLast(new MapLocation(otherEnd.x, otherEnd.y));
 					otherEnd = otherEnd.previous;
 				}
 				/*for (int i = 0; i < explored.length; ++i) {
 					String thing = "";
 					for (int j = 0; j < explored[0].length; ++j) {
-						if (end.equals(new MapLocation(j, i)) || start.equals(new MapLocation(j, i)))
+						if (start.equals(new MapLocation(j, i)) || end.equals(new MapLocation(j, i)))
 							thing += "O ";
 						else if (explored[i][j] == true)
 							thing += "X ";
@@ -129,15 +156,22 @@ public class RobotPlayer implements Constants{
 				}*/
 				return result;
 			}
-			if (top.x > 0 && endExplored[top.y][top.x - 1] == null) {
-				PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, start, map[top.y][top.x - 1] == NEUTRALMINE);
-				endQueue.add(newNode);
-				endExplored[top.y][top.x - 1] = newNode;
-			}
-			if (top.x < map[0].length - 1 && endExplored[top.y][top.x + 1] == null) {
-				PathfindingNode newNode = new PathfindingNode(top.x + 1, top.y, top, start, map[top.y][top.x + 1] == NEUTRALMINE);
-				endQueue.add(newNode);
-				endExplored[top.y][top.x + 1] = newNode;
+			if (top.x > 0) {
+				if (top.y > 0 && endExplored[top.y - 1][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y - 1, top, start, map[top.y - 1][top.x - 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y - 1][top.x - 1] = newNode;
+				}
+				if (endExplored[top.y][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, start, map[top.y][top.x - 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y][top.x - 1] = newNode;
+				}
+				if (top.y < map.length - 1 && endExplored[top.y + 1][top.x - 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, start, map[top.y + 1][top.x - 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y + 1][top.x - 1] = newNode;
+				}
 			}
 			if (top.y > 0 && endExplored[top.y - 1][top.x] == null) {
 				PathfindingNode newNode = new PathfindingNode(top.x, top.y - 1, top, start, map[top.y - 1][top.x] == NEUTRALMINE);
@@ -149,56 +183,107 @@ public class RobotPlayer implements Constants{
 				endQueue.add(newNode);
 				endExplored[top.y + 1][top.x] = newNode;
 			}
-
+			if (top.x < map.length - 1) {
+				if (top.y > 0 && endExplored[top.y - 1][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x + 1, top.y - 1, top, start, map[top.y - 1][top.x + 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y - 1][top.x + 1] = newNode;
+				}
+				if (endExplored[top.y][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, start, map[top.y][top.x + 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y][top.x + 1] = newNode;
+				}
+				if (top.y < map.length - 1 && endExplored[top.y + 1][top.x + 1] == null) {
+					PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, start, map[top.y + 1][top.x + 1] == NEUTRALMINE);
+					endQueue.add(newNode);
+					endExplored[top.y + 1][top.x + 1] = newNode;
+				}
+			}
 		}
 	}
-
-	public static LinkedList<PathfindingNode> aStar(int[][] map, MapLocation start, MapLocation end) {
-		PathfindingNodeComparator pnc = new PathfindingNodeComparator();
-		PriorityQueue<PathfindingNode> queue = new PriorityQueue<PathfindingNode>(100, pnc);
-		boolean[][] explored = new boolean[map.length][map[0].length];
-		queue.add(new PathfindingNode(start.x, start.y));
-		while (!queue.isEmpty()) {
-			PathfindingNode top = queue.poll();
-			explored[top.y][top.x] = true;
-			if (top.equals(end)) {
-				LinkedList<PathfindingNode> result = new LinkedList<PathfindingNode>();
-				while (top != null) {
-					result.addFirst(top);
-					top = top.previous;
+	
+	//Modify a previously calculated path to account for a new obstacle at the given location
+	public static void fixPath(int[][] map, LinkedList<MapLocation> path, MapLocation obstacle) {
+		for (ListIterator<MapLocation> i = path.listIterator(); i.hasNext();) {
+			MapLocation loc = i.next();
+			if (loc.x == obstacle.x && loc.y == obstacle.y) {
+				boolean[][] targetSquares = new boolean[map.length][map[0].length];
+				PathfindingNodeComparator pc = new PathfindingNodeComparator();
+				MapLocation end = path.getLast();
+				PriorityQueue<PathfindingNode> queue = new PriorityQueue<PathfindingNode>(128, pc);
+				PathfindingNode[][] explored = new PathfindingNode[map.length][map[0].length];
+				ListIterator<MapLocation> restOfList = path.listIterator(i.nextIndex() - 1);
+				while (restOfList.hasNext()) {
+					MapLocation target = restOfList.next();
+					targetSquares[target.y][target.x] = true;
 				}
-				/*for (int i = 0; i < explored.length; ++i) {
-					String thing = "";
-					for (int j = 0; j < explored[0].length; ++j) {
-						if (end.equals(new MapLocation(j, i)) || start.equals(new MapLocation(j, i)))
-							thing += "O ";
-						else if (explored[i][j] == true)
-							thing += "X ";
-						else
-							thing += "  ";
+				queue.add(new PathfindingNode(loc.x, loc.y));
+				while (!queue.isEmpty()) {
+					PathfindingNode top = queue.poll();
+					if (targetSquares[top.y][top.x]) {
+						while (true) {
+							MapLocation last = restOfList.previous();
+							if (top.equals(last))
+								continue;
+							List<MapLocation> endOfPath = path.subList(i.nextIndex(), path.size());
+							LinkedList<MapLocation> middleOfPath = new LinkedList<MapLocation>();
+							while (top.previous != null) {
+								middleOfPath.addFirst(new MapLocation(top.x, top.y));
+								top = top.previous;
+							}
+							path = (LinkedList<MapLocation>) path.subList(0, i.previousIndex() + 1);
+							path.addAll(middleOfPath);
+							path.addAll(endOfPath);
+						}
 					}
-					System.out.println(thing);
-				}*/
-				return result;
-			}
-			if (top.x > 0 && !explored[top.y][top.x - 1]) {
-				queue.add(new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x - 1] == NEUTRALMINE));
-				explored[top.y][top.x - 1] = true;
-			}
-			if (top.x < map[0].length - 1 && !explored[top.y][top.x + 1]) {
-				queue.add(new PathfindingNode(top.x + 1, top.y, top, end, map[top.y][top.x + 1] == NEUTRALMINE));
-				explored[top.y][top.x + 1] = true;
-			}
-			if (top.y > 0 && !explored[top.y - 1][top.x]) {
-				queue.add(new PathfindingNode(top.x, top.y - 1, top, end, map[top.y - 1][top.x] == NEUTRALMINE));
-				explored[top.y - 1][top.x] = true;
-			}
-			if (top.y < map.length - 1 && !explored[top.y + 1][top.x]) {
-				queue.add(new PathfindingNode(top.x, top.y + 1, top, end, map[top.y + 1][top.x] == NEUTRALMINE));
-				explored[top.y + 1][top.x] = true;
+					if (top.x > 0) {
+						if (top.y > 0 && explored[top.y - 1][top.x - 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y - 1, top, end, map[top.y - 1][top.x - 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y - 1][top.x - 1] = newNode;
+						}
+						if (explored[top.y][top.x - 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x - 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y][top.x - 1] = newNode;
+						}
+						if (top.y < map.length - 1 && explored[top.y + 1][top.x - 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, end, map[top.y + 1][top.x - 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y + 1][top.x - 1] = newNode;
+						}
+					}
+					if (top.y > 0 && explored[top.y - 1][top.x] == null) {
+						PathfindingNode newNode = new PathfindingNode(top.x, top.y - 1, top, end, map[top.y - 1][top.x] == NEUTRALMINE);
+						queue.add(newNode);
+						explored[top.y - 1][top.x] = newNode;
+					}
+					if (top.y < map.length - 1 && explored[top.y + 1][top.x] == null) {
+						PathfindingNode newNode = new PathfindingNode(top.x, top.y + 1, top, end, map[top.y + 1][top.x] == NEUTRALMINE);
+						queue.add(newNode);
+						explored[top.y + 1][top.x] = newNode;
+					}
+					if (top.x < map.length - 1) {
+						if (top.y > 0 && explored[top.y - 1][top.x + 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x + 1, top.y - 1, top, end, map[top.y - 1][top.x + 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y - 1][top.x + 1] = newNode;
+						}
+						if (explored[top.y][top.x + 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y, top, end, map[top.y][top.x + 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y][top.x + 1] = newNode;
+						}
+						if (top.y < map.length - 1 && explored[top.y + 1][top.x + 1] == null) {
+							PathfindingNode newNode = new PathfindingNode(top.x - 1, top.y + 1, top, end, map[top.y + 1][top.x + 1] == NEUTRALMINE);
+							queue.add(newNode);
+							explored[top.y + 1][top.x + 1] = newNode;
+						}
+					}
+				}
 			}
 		}
-		return null;
 	}
 
 	public static int checkXBottleNeck(MapLocation loc, RobotController rc){
@@ -266,15 +351,16 @@ class PathfindingNode {
 			travelCost = prev.travelCost + 13;
 		else
 			travelCost = prev.travelCost + 1;
-		priority = travelCost + 12 * (target.x - x + target.y - y);
+		priority = travelCost + 1.005 * Math.max(target.x - x, target.y - y);
 	}
 	public boolean equals(MapLocation other) {
 		return (x == other.x && y == other.y);
 	}
+	
 	public int x;
 	public int y;
 	public PathfindingNode previous;
 	public int travelCost;
-	public int priority;
+	public double priority;
 }
 
