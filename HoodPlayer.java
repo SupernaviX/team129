@@ -17,7 +17,7 @@ public class HoodPlayer implements Constants{
 
 	
 	public static void run(RobotController rc) {
-		int[][] map;
+		//int[][] map;
 		while (true) {
 			try {
 				if (rc.getType() == RobotType.HQ) {
@@ -56,6 +56,10 @@ public class HoodPlayer implements Constants{
 			}
 		}
 	}
+	public void orderCamps(MapLocation[][] camps){
+		
+	}
+	
 	//Next four methods are used in getBottleNecks to calculate bottlenecks
 	public int checkXBottleNeck(MapLocation loc, RobotController rc, int[][] map){
 		int top = loc.y, bot = loc.y, total = 0;
