@@ -5,7 +5,6 @@ import battlecode.common.GameConstants;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
-import battlecode.common.Clock;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -15,9 +14,10 @@ import java.util.LinkedList;
  */
 
 public class HoodPlayer implements Constants{
-	private int[][] map;
+
 	
 	public static void run(RobotController rc) {
+		int[][] map;
 		while (true) {
 			try {
 				if (rc.getType() == RobotType.HQ) {
@@ -57,7 +57,7 @@ public class HoodPlayer implements Constants{
 		}
 	}
 	//Next four methods are used in getBottleNecks to calculate bottlenecks
-	public int checkXBottleNeck(MapLocation loc, RobotController rc){
+	public int checkXBottleNeck(MapLocation loc, RobotController rc, int[][] map){
 		int top = loc.y, bot = loc.y, total = 0;
 		while((map[loc.x][--top]!=NEUTRALMINE&&top>=0)&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
@@ -65,7 +65,7 @@ public class HoodPlayer implements Constants{
 			total++;
 		return total;
 	}
-	public int checkYBottleNeck(MapLocation loc, RobotController rc){
+	public int checkYBottleNeck(MapLocation loc, RobotController rc, int[][] map){
 		int left = loc.x, right = loc.x, total = 0;
 		while((map[--left][loc.y]!=NEUTRALMINE&&left>=0)&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
@@ -73,7 +73,7 @@ public class HoodPlayer implements Constants{
 			total++;
 		return total;
 	}
-	public int checkNAngleBottleNeck(MapLocation loc, RobotController rc){
+	public int checkNAngleBottleNeck(MapLocation loc, RobotController rc, int[][] map){
 		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
 		while((map[--left][++top]!=NEUTRALMINE&&left>=0&&top<rc.getMapHeight())&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
@@ -81,7 +81,7 @@ public class HoodPlayer implements Constants{
 			++total;
 		return total;
 	}
-	public int checkPAngleBottleNeck(MapLocation loc, RobotController rc){
+	public int checkPAngleBottleNeck(MapLocation loc, RobotController rc, int[][] map){
 		int left = loc.x, right = loc.x, total = 0, top = loc.y, bot = loc.y;
 		while((map[--left][--top]!=NEUTRALMINE&&left>=0&&top>=0)&&total<=MAX_BOTTLENECK_CHECK)
 			total++;
@@ -90,36 +90,133 @@ public class HoodPlayer implements Constants{
 		return total;
 	}
 	//In the map array, the hundreds place of the number is the bottleneck value
-	public ArrayList<MapLocation> getBottleNecks(ArrayList<MapLocation> path, RobotController rc){
+	public ArrayList<MapLocation> getBottleNecks(ArrayList<MapLocation> path, RobotController rc, int[][] map){
 		ArrayList<MapLocation> ret = new ArrayList<MapLocation>();
 		for(int i = 2; i<path.size();++i){
 			int val;
 			if(path.get(i).x == path.get(i-2).x){
-				  val = checkXBottleNeck(path.get(i-1), rc);
+				  val = checkXBottleNeck(path.get(i-1), rc, map );
 				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
 			}
 			else if(path.get(i).y == path.get(i-2).y){
-				  val = checkYBottleNeck(path.get(i-1), rc);
+				  val = checkYBottleNeck(path.get(i-1), rc, map);
 				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
 			}
 			else if(path.get(i).y < path.get(i-2).y){
-				  val = checkPAngleBottleNeck(path.get(i-1), rc);
+				  val = checkPAngleBottleNeck(path.get(i-1), rc, map);
 				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
 			}
 			else{
-				  val = checkNAngleBottleNeck(path.get(i-1), rc);
+				  val = checkNAngleBottleNeck(path.get(i-1), rc, map);
 				map[path.get(i-1).x][path.get(i-1).y] +=100*val;
 			}
 			//This method doesn't give a fuck about the last spot being a bottleneck
 		}
 		return ret;
 	}
-	public LinkedList<MapLocation> pointsOfInterest(MapLocation[] camps){
-		LinkedList<MapLocation> ret = new LinkedList<MapLocation>();
-		for (MapLocation camp: camps){
+	/*
+	 * Calculates the contiguous camps and saves the number of adjacent camps in the map array 
+	 */
+	public void contiguousCamps(MapLocation[] camps, RobotController rc, int[][] map){
+		//LinkedList<MapLocation> ret = new LinkedList<MapLocation>();
+		LinkedList<MapLocation> queue = new LinkedList<MapLocation>();
+		LinkedList<MapLocation> contiguousBlock = new LinkedList<MapLocation>();
+		for(int j = 0; j<camps.length;++j){
+			queue.clear();
+			queue.add(camps[j]);
+			MapLocation camp;
+			if(getField(map[queue.get(0).x][queue.get(0).y], FIRST_CHECK_FIELD)==1)
+			{
+				contiguousBlock.clear();
+				contiguousBlock.add(queue.get(0));
+				while(!queue.isEmpty()){
+					camp = queue.poll();
+					int x = camp.x, y = camp.y;
+					for(int i = 1; i<9;++i){
+						switch (i){
+						case 1:
+							if(y+1<rc.getMapHeight()&&
+									getField(map[x][y+1], TYPE_FIELD)==CAMP&&
+									getField(map[x][y+1], FIRST_CHECK_FIELD)!=1) {
+									//ret.add(new MapLocation(x, y+1));
+									map[x][y+1] = setField(map[x][y+1], FIRST_CHECK_FIELD, 1);
+									contiguousBlock.add(camp);
+							}
+							break;
+						case 2:
+							if(x+1<rc.getMapWidth()&&y+1<rc.getMapHeight()&&
+									getField(map[x+1][y+1], TYPE_FIELD)==CAMP&&
+									getField(map[x+1][y+1], FIRST_CHECK_FIELD)!=1) {
+									//ret.add(new MapLocation(x+1, y+1));
+									map[x+1][y+1] = setField(map[x+1][y+1], FIRST_CHECK_FIELD, 1);
+									contiguousBlock.add(camp);
+							}
+							break;
+						case 3: 
+							if(x!=0&&
+								getField(map[x-1][y], TYPE_FIELD)==CAMP&&
+								getField(map[x-1][y], FIRST_CHECK_FIELD)!=1) {
+								//ret.add(new MapLocation(x-1, y));
+								map[x-1][y] = setField(map[x-1][y], FIRST_CHECK_FIELD, 1);
+								contiguousBlock.add(camp);
+							}
+							break;
+						case 4:
+							if(x+1<rc.getMapWidth()&&
+									getField(map[x+1][y], TYPE_FIELD)==CAMP&&
+									getField(map[x+1][y], FIRST_CHECK_FIELD)!=1) {
+									//ret.add(new MapLocation(x+1, y));
+									map[x+1][y] = setField(map[x+1][y], FIRST_CHECK_FIELD, 1);
+									contiguousBlock.add(camp);
+							}
+							break;
+						case 5: 
+							if(x!=0&&y!=0&&
+								getField(map[x-1][y-1], TYPE_FIELD)==CAMP&&
+								getField(map[x-1][y-1], FIRST_CHECK_FIELD)!=1) {
+								//ret.add(new MapLocation(x-1, y+1));
+								map[x-1][y-1] = setField(map[x-1][y-1], FIRST_CHECK_FIELD, 1);
+								contiguousBlock.add(camp);
+							}
+							break;
+						case 6:
+							if(y!=0&&
+									getField(map[x][y-1], TYPE_FIELD)==CAMP&&
+									getField(map[x][y-1], FIRST_CHECK_FIELD)!=1) {
+									//ret.add(new MapLocation(x, y-1));
+									map[x][y-1] = setField(map[x][y-1], FIRST_CHECK_FIELD, 1);
+									contiguousBlock.add(camp);
+							}
+							break;
+						case 7:
+							if(x+1<rc.getMapWidth()&&y!=0&&
+									getField(map[x+1][y-1], TYPE_FIELD)==CAMP&&
+									getField(map[x+1][y-1], FIRST_CHECK_FIELD)!=1) {
+									//ret.add(new MapLocation(x+1, y-1));
+									map[x+1][y-1] = setField(map[x+1][y-1], FIRST_CHECK_FIELD, 1);
+									contiguousBlock.add(camp);
+							}
+						case 8: 
+							if(x!=0&&y+1<rc.getMapHeight()&&
+								getField(map[x-1][y+1], TYPE_FIELD)==CAMP&&
+								getField(map[x-1][y+1], FIRST_CHECK_FIELD)!=1) {
+								//ret.add(new MapLocation(x-1, y+1));
+								map[x-1][y+1] = setField(map[x-1][y+1], FIRST_CHECK_FIELD, 1);
+								contiguousBlock.add(camp);
+							}
+							break;
+						}
+					}
+				}
+				int size = Math.min(contiguousBlock.size(), 15);
+				while(!contiguousBlock.isEmpty()){
+					camp = contiguousBlock.poll();
+					map[camp.x][camp.y] = setField(map[camp.x][camp.y], NUM_CAMPS_FIELD, size);
+				}
+			}
 			
 		}
-		return ret;
+		//return ret;
 	}
 	public int[][] mapRepresentation(RobotController rc){
 		int[][] ret = new int[rc.getMapWidth()][rc.getMapHeight()];
@@ -142,7 +239,7 @@ public class HoodPlayer implements Constants{
 		}
 		return ret;
 	}
-
+	/*
 	//FOR MAP USAGE!!!!!
 	
 	//Bits 0-3 Alliance: Unknown = 00 Neutral = 11 Allied = 01 Enemy = 10
@@ -158,7 +255,7 @@ public class HoodPlayer implements Constants{
 	
 	//Bits 20-29 Unassigned control bits as of now
 	//Bits 30/31 Check bits: Use FIRST_CHECK_FIELD and SECOND_CHECK_FIELD for the bits
-
+	*/
 	public static int setField(int input, int field, int value){
 		input = clearedField(input,field);
 		return input + value<<FIELD_SIZE*field;
