@@ -36,8 +36,8 @@ public interface Constants {
 	public static final int SECOND_CHECK = 1<<31;
 	
 	public static final int MAX_BOTTLENECK_CHECK = 5;
-	public static final int NEUTRALMINE = 4;
-	public static final int NEUTRALCAMP = 0;
+	public static final int NEUTRALMINE = 7;
+	public static final int NEUTRALCAMP = 3;
 	public static final int ENEMYHQ = 10;
 	public static final int ALLIEDHQ = 9;
 	public static final int BOTTLENECKCODE  = 10;
