@@ -142,11 +142,56 @@ public class HoodPlayer implements Constants{
 		}
 		return ret;
 	}
-	public static int[][] precomputeDistances(RobotController rc, int[][] map){
-		
+
+	//FOR MAP USAGE!!!!!
+	
+	//Bits 0-3 Alliance: Unknown = 00 Neutral = 11 Allied = 01 Enemy = 10
+	//Bits 4-7 Basic Type: Unknown = 000 Mine = 001 HQ = 010 Soldier = 011 Camp = 100
+	
+	
+	//CAMPS ONLY:
+	//Bits 8-11 Camp Type: Unknown = 000 Medbay = 001 Shield = 010 Supply = 011 Generator = 100 Artillery = 101
+	//Bits 12-15 Number of Contiguous Camps: Unknown = 0000, if non-zero, it is the number of contiguous camps, where 1111 signifies >=15
+
+	
+	//Bits 16-19 Bottleneck size: Unknown = 000, if non-zero, it is simply the bottleneck width, where 111 signifies >=7
+	
+	//Bits 20-29 Unassigned control bits as of now
+	//Bits 30/31 Check bits: Use FIRST_CHECK_FIELD and SECOND_CHECK_FIELD for the bits
+
+	public static int setField(int input, int field, int value){
+		input = clearedField(input,field);
+		return input + value<<FIELD_SIZE*field;
 	}
-	public static int setBits(int start, int code){
+	public static int clearedField(int input, int field){
 		
-		return 0;
+		if(field ==0){
+			return input - input % FIELD_SIZEx2;
+		}
+		else if(field <7){
+			int firstChunk, secondChunk;
+			firstChunk = input % FIELD_SIZEx2*field;
+			secondChunk = input - (input %FIELD_SIZEx2*(field+1));
+			return firstChunk + secondChunk;
+		}
+
+		else if (field==FIRST_CHECK_FIELD&&(input >> 30)%2==1){
+			return input -FIRST_CHECK;
+		}
+		else if(input <0)
+			return input - SECOND_CHECK;
+		else 
+			return input;
 	}
+	public static int getField(int input, int field){
+		if(field<7){
+			return (input >> FIELD_SIZE*field) % FIELD_SIZEx2;
+		}
+		else if (field==FIRST_CHECK_FIELD){
+			return (input >> 30)%2;
+		}
+		else
+			return (input >>31)%2;
+	}
+
 }
