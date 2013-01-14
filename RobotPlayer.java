@@ -6,6 +6,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Team;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 /** The example funcs player is a player meant to demonstrate basic usage of the most common commands.
  * Robots will move around randomly, occasionally mining and writing useless messages.
  * The HQ will spawn soldiers continuously. 
@@ -26,8 +27,8 @@ public class RobotPlayer implements Constants{
 				}
 				System.out.println("Algorithm Started");
 				if (rc.getTeam() == Team.A)
-					Pathfinding.findPath(map, rc.senseHQLocation(), rc.senseEnemyHQLocation());
-				else
+					//Pathfinding.floodFill(new char[rc.getMapWidth()][rc.getMapHeight()], rc.senseHQLocation(), 'a');
+				//else
 					while (true) {}
 				System.out.println("Algorithm Finished");
 				rc.yield();
@@ -55,7 +56,7 @@ public class RobotPlayer implements Constants{
 	public static int[][] mapRepresentation(RobotController rc){
 		int[][] ret = new int[rc.getMapWidth()][rc.getMapHeight()];
 		try{
-			MapLocation[] locs = rc.senseMineLocations(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2), rc.getMapWidth()/2+rc.getMapHeight()/2, null);
+			MapLocation[] locs = rc.senseNonAlliedMineLocations(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2), 4900);
 			for (MapLocation m: locs){
 				ret[m.x][m.y] = Sprite.NEUTRALMINE.getVal();
 			}
