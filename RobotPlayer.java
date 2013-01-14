@@ -15,14 +15,15 @@ public class RobotPlayer {
     while (true) {
       try {
         if (rc.getType() == RobotType.HQ) {
-          if (Clock.getRoundNum() > 100)
+          /*
+           * For turn 100 and every 5th turn after, issue global suicide order.
+           * Do not do this if the robots say '1'.
+           * For some reason, the HQ will always read '0', even if it is reading the correct channel.
+           * Perhaps HQ has become self-aware?
+           */
+          if (Clock.getRoundNum() > 100 && Clock.getRoundNum() % 5 == 0 && RobotSpeak.hqRead(rc) != 1)
           {
       		  RobotSpeak.hqBroadcast(rc, 1);
-      		  System.out.println("KILL YOURSELF");
-          }
-          else
-          {
-        	  RobotSpeak.hqBroadcast(rc, 0);
           }
           if (rc.isActive()) {
             // Spawn a soldier
@@ -45,10 +46,15 @@ public class RobotPlayer {
               }
             }
           }
+          //Past turn 200, tell HQ to stop killing us. Hope HQ is complaint..
+          if (Clock.getRoundNum() > 200)
+          {
+        	  RobotSpeak.robotBroadcast(rc, 1);
+          }
+          //This part should be obvious.
           if (RobotSpeak.robotRead(rc) == 1)
           {
-        	  System.out.println("NO U");
-        	  rc.suicide();
+			rc.suicide();
           }
           if (Math.random()<0.01 && rc.getTeamPower()>5) {
             // Write the number 5 to a position on the message board corresponding to the robot's ID
