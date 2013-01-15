@@ -27,8 +27,8 @@ public class RobotPlayer implements Constants{
 				}
 				System.out.println("Algorithm Started");
 				if (rc.getTeam() == Team.A)
-					//Pathfinding.floodFill(new char[rc.getMapWidth()][rc.getMapHeight()], rc.senseHQLocation(), 'a');
-				//else
+					Pathfinding.findPath(map, rc.senseHQLocation(), rc.senseEnemyHQLocation());
+				else
 					while (true) {}
 				System.out.println("Algorithm Finished");
 				rc.yield();
