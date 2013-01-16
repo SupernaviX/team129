@@ -294,5 +294,166 @@ public class HoodPlayer implements Constants{
 		else
 			return (input >>31)%2;
 	}
-
+	public static int[][][] emptygrid;
+	public static int[][] clockwise = {{0,0},{1,0},{2,0}, {2, 1},{2, 2},{1,2},{0, 2},{0, 1}};
+	//need to do this eventually
+	public static void fill(int[][] map, int[][] grid3x3){
+		
+	}
+	//temparrays[].length = 4 because you can have at most 4 distinct subsections in a 3x3 grid
+	public static int[][][] process3x3(int[][] map, int[][][] temparrays, int current, int width, int height){
+		//Needs modification for grids not 3x3
+		
+		//Curgrid is used JUST to label subregions for the map. This could probably be optimized to go straight to the map
+		//instead of using curgrid as an intermediate step
+		int[][] curgrid = new int[3][3];
+		//Upper left corner of grid
+		//curRegion is the current number of subsections
+		int centerx = (current/width) * 3, centery = (current%width) * 3, curRegion = 0;
+		//True == mine
+		if(map[centerx+1][centery+1]!=NEUTRALMINE){
+			//Every free space is in curRegion 1
+			int[][][] ret = new int[3][3][1];
+			for(int i = 0; i<3;++i){
+				for(int j = 0; j<3;++j){
+					if(map[centerx+i][centery+j]==NEUTRALMINE){
+						//Because any mine reached from a center open point is 1
+						ret[i][j][0] = 1;
+					}
+					else{
+						//Because curRegion is 1
+						curgrid[i][j] = 1;
+					}
+				}
+			}
+			return ret;
+		}
+		else{
+			boolean lastspaceismine = true, currentspaceismine = true;
+			//First position gets the coord pair
+			//Hard case
+			lastspaceismine = map[clockwise[7][0]+centerx][clockwise[7][1]+centery]==NEUTRALMINE;
+			int i = 0;
+			//Loop until you find first fresh segment
+			for(;i<8;++i){
+				currentspaceismine = map[clockwise[i][0]+centerx][clockwise[i][1]+centery]==NEUTRALMINE;
+				if(lastspaceismine&&!currentspaceismine){
+					i+=9;
+				}
+				else{
+					lastspaceismine = currentspaceismine;
+				}
+			}
+			i-=10;
+			//placeholder for simple case to finish later
+			int j = i;
+			if(i==-2){
+				return emptygrid;
+			}
+			else{
+				do{
+					currentspaceismine = map[clockwise[j][0]+centerx][clockwise[j][1]+centery]==NEUTRALMINE;
+					if(!currentspaceismine){
+						if(lastspaceismine){
+							curgrid[clockwise[j][0]][clockwise[j][1]] = ++curRegion;
+						}
+						else{
+							curgrid[clockwise[j][0]][clockwise[j][1]] = curRegion;
+						}
+						//Fills adjacent spaces for the corresponding subsection
+						//Needs to be double checked for correctness
+						switch(j){
+						case 0:
+							temparrays[curRegion-1][1][0]=1;
+							temparrays[curRegion-1][0][1]=1;
+							break;
+						case 1:
+							temparrays[curRegion-1][0][0]=1;
+							temparrays[curRegion-1][2][0]=1;
+							temparrays[curRegion-1][0][1]=1;
+							temparrays[curRegion-1][2][1]=1;
+							break;
+						case 2:
+							temparrays[curRegion-1][1][0]=1;
+							temparrays[curRegion-1][2][1]=1;
+							break;
+						case 3:
+							temparrays[curRegion-1][2][2]=1;
+							temparrays[curRegion-1][2][0]=1;
+							temparrays[curRegion-1][1][2]=1;
+							temparrays[curRegion-1][1][0]=1;
+							break;
+						case 4:
+							temparrays[curRegion-1][0][1]=1;
+							temparrays[curRegion-1][1][2]=1;
+							break;
+						case 5:
+							temparrays[curRegion-1][0][2]=1;
+							temparrays[curRegion-1][2][2]=1;
+							temparrays[curRegion-1][0][1]=1;
+							temparrays[curRegion-1][2][1]=1;
+							break;
+						case 6:
+							temparrays[curRegion-1][2][1]=1;
+							temparrays[curRegion-1][1][2]=1;
+							break;
+						case 7:
+							temparrays[curRegion-1][0][2]=1;
+							temparrays[curRegion-1][0][0]=1;
+							temparrays[curRegion-1][1][0]=1;
+							temparrays[curRegion-1][1][2]=1;
+							break;
+						}
+					}
+					j = (j+1)%8;
+				}
+				while(j!=i);
+				//At this point, all representations of all subsections are filled
+				//Now to finish and return
+				int[][][] ret = new int[3][3][curRegion];
+				if(curRegion!=1){
+					for(i = 0;i<8;++i){
+						if(map[clockwise[i][0]+centerx][clockwise[i][1]+centery]==NEUTRALMINE){
+							for(j = 0; j<curRegion;++j){
+								if(temparrays[j][clockwise[i][0]][clockwise[i][1]]==1){
+									ret[clockwise[i][0]][clockwise[i][1]][j] = 1;
+								}
+								else
+								{
+									ret[clockwise[i][0]][clockwise[i][1]][j] = 2;
+								}
+							}
+						}
+						else{
+							//Remember, this is the subregion area
+							int daRegion = curgrid[clockwise[i][0]][clockwise[i][1]];
+							//Regions are from 1-4, stored from 0-3!
+							j = daRegion-1;
+							while(j!= daRegion){
+								j= (j+1)%curRegion;
+								ret[clockwise[i][0]][clockwise[i][1]][j] = 1;
+							}
+						}
+						
+					}
+				}
+				else{
+					for(i = 0;i<8;++i){
+						if(map[clockwise[i][0]+centerx][clockwise[i][1]+centery]==NEUTRALMINE){
+							for(j = 0; j<curRegion+1;++j){
+								if(temparrays[j][clockwise[i][0]][clockwise[i][1]]==1){
+									ret[clockwise[i][0]][clockwise[i][1]][j] = 1;
+								}
+								else
+								{
+									ret[clockwise[i][0]][clockwise[i][1]][j] = 2;
+								}
+							}
+						}
+					}
+				}
+				return ret;
+			}
+		}
+	}
 }

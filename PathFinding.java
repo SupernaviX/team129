@@ -11,6 +11,39 @@ import battlecode.common.MapLocation;
 
 public class PathFinding implements Constants {
 
+	public static void print(PathfindingNode[][] startExplored, PathfindingNode[][] endExplored, MapLocation start, MapLocation end){
+		String thing;
+		int[][] nigga = new int[endExplored.length][endExplored[0].length];
+		nigga[0][0] = 5;
+		for (int j = 0; j < endExplored[0].length; ++j) {
+			thing = "";
+			for (int i = 0; i < endExplored.length; ++i) {
+				if(i>0&&j>0){
+					nigga[i][j] = nigga[i-1][j-1];
+				}
+				else if(i>5&&j<5)
+					nigga[i][j] = nigga[j][i];
+				else
+					nigga[i][j] = nigga[i/5][j/5];
+//				if (endExplored[i][j] == null && startExplored[i][j] == null)
+//					thing += "- ";
+//				else
+//				{
+//					if (endExplored[i][j] == null && startExplored[i][j] != null)
+//						thing += "S ";
+//					else{
+//						if (endExplored[i][j] != null && startExplored[i][j] == null)
+//							thing += "E ";
+//						else
+//						{
+//							thing += "X ";
+//						}
+//					}
+//				}
+			}
+			System.out.println(thing);
+		}
+	}
 	//Use a bidirectional A* algorithm to find an efficient path
 	public static LinkedList<MapLocation> findPath(int[][] map, MapLocation start, MapLocation end) {
 		PathfindingNodeComparator pnc = new PathfindingNodeComparator();
@@ -37,24 +70,7 @@ public class PathFinding implements Constants {
 					result.addLast(new MapLocation(otherEnd.x, otherEnd.y));
 					otherEnd = otherEnd.previous;
 				}
-//				for (int j = 0; j < endExplored[0].length; ++j) {
-//					String thing = "";
-//					for (int i = 0; i < endExplored.length; ++i) {
-//						if (start.equals(new MapLocation(i, j)) || end.equals(new MapLocation(i, j)))
-//							thing += "0 ";
-//						else {
-//							if (endExplored[i][j] == null && startExplored[i][j] != null)
-//								thing += "S ";
-//							else if (endExplored[i][j] != null && startExplored[i][j] == null)
-//								thing += "E ";
-//							else if (endExplored[i][j] != null && startExplored[i][j] != null)
-//								thing += "X ";
-//							else
-//								thing += "- ";
-//						}
-//					}
-//					System.out.println(thing);
-//				}
+				print(startExplored, endExplored, start, end);
 				return result;
 			}
 			if (top.x > 0) {
@@ -115,24 +131,7 @@ public class PathFinding implements Constants {
 					result.addLast(new MapLocation(otherEnd.x, otherEnd.y));
 					otherEnd = otherEnd.previous;
 				}
-//				for (int j = 0; j < endExplored[0].length; ++j) {
-//					String thing = "";
-//					for (int i = 0; i < endExplored.length; ++i) {
-//						if (start.equals(new MapLocation(i, j)) || end.equals(new MapLocation(i, j)))
-//							thing += "0 ";
-//						else {
-//							if (endExplored[i][j] == null && startExplored[i][j] != null)
-//								thing += "S ";
-//							else if (endExplored[i][j] != null && startExplored[i][j] == null)
-//								thing += "E ";
-//							else if (endExplored[i][j] != null && startExplored[i][j] != null)
-//								thing += "X ";
-//							else
-//								thing += "- ";
-//						}
-//					}
-//					System.out.println(thing);
-//				}
+				print(startExplored, endExplored, start, end);
 				return result;
 			}
 			if (top.x > 0) {
